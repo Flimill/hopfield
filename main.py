@@ -1,6 +1,7 @@
 import numpy as np
 import generate_photo
 import time
+from PIL import Image, ImageDraw
 
 import numpy as np
 np.set_printoptions(threshold=np.inf)
@@ -13,8 +14,10 @@ class HopfieldNetwork:
 
     def train(self, patterns):
         num_patterns = len(patterns)
-        
+        train_count=0
         for pattern in patterns:
+            train_count+=1
+            print(f"train_count={train_count}")
             pattern = np.array(pattern)
             outer_product = np.outer(pattern, pattern)
             self.weights += outer_product / num_patterns  # Вычисление весов по формуле
@@ -31,7 +34,10 @@ class HopfieldNetwork:
 
     def predict(self, pattern, max_iters=100):
         pattern = np.array(pattern)
+        predict_count=0
         for _ in range(max_iters):
+            predict_count+=1
+            print(f"predict_count={predict_count}")
             new_pattern = np.sign(np.dot(self.weights, pattern))
             if np.array_equal(new_pattern, pattern):
                 return new_pattern
@@ -42,17 +48,21 @@ class HopfieldNetwork:
 # Пример использования
 if __name__ == "__main__":
 
-    weight = 320
-    hight = 320
+    weight = 128
+    hight = 128
     w,h = weight,hight
     min_fig_size =10
     mfs=10
     num_shapes=1
-    num_samples = 100
+    num_samples = 6
     train_path = "patterns"
-    shape_types=['box','circle','triangle']
-    #shape_types=['box']
-    generate_photo.genererate_pictures(train_path, num_samples,w,h,min_fig_size,num_shapes)
+    #shape_types=['box','circle','triangle']
+    shape_types=['box']
+    
+    #generate_photo.genererate_pictures(train_path, num_samples,w,h,min_fig_size,num_shapes)
+    
+    
+    
     # Предположим, что у нас есть три различных образца: квадрат, круг и треугольник.
     # Каждый образец представлен в виде бинарного вектора.
     patterns=[]
@@ -60,20 +70,22 @@ if __name__ == "__main__":
     for type in shape_types:
         for i in range(num_samples):
             path=f"patterns/{type}/{type}-{i}.png"
-            image_binary_vector = generate_photo.image_path_to_binary_vector(path)
+            image_binary_vector = generate_photo.image_path_to_binary_vector(path, threshold=128, new_width=w, new_height=h)
             patterns.append(image_binary_vector)
 
     network = HopfieldNetwork(pattern_size=len(patterns[0]))
     network.train(patterns)
-
-    for type in shape_types:
-        path=f"patterns/{type}/{type}-1.png"
-        noisy_image= generate_photo.get_noisy_picture(path,w,h)
-        noisy_image_binary_vector = generate_photo.image_to_binary_vector(noisy_image)
-        predicted_pattern=network.predict(noisy_image_binary_vector)
-        result_image = generate_photo.binary_vector_to_image(predicted_pattern, w, h)
-        result_image.show()
-        time.sleep(5)
+    for i in range(num_samples):
+        for type in shape_types:
+            path=f"patterns/{type}/{type}-{i}.png"
+            noisy_image= generate_photo.get_noisy_picture(path,w,h)
+            noisy_image.show()
+            noisy_image_binary_vector = generate_photo.image_to_binary_vector(noisy_image)
+            #generate_photo.binary_vector_to_image(noisy_image_binary_vector,w,h).show()
+            predicted_pattern=network.predict(noisy_image_binary_vector)
+            result_image = generate_photo.binary_vector_to_image(predicted_pattern, w, h)
+            result_image.show()
+            time.sleep(2)
 
 
 

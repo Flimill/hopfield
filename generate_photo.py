@@ -112,10 +112,18 @@ def genererate_pictures(_path, num_samples,w,h,min_fig_size,num_shapes):
         img_treangle = draw_triangles_random_rotated(w=w, h=h, fc=random_color(), mfs=min_fig_size,num_shapes=num_shapes)
         img_treangle.save(os.path.join(os.path.join(_path, "triangle"), f"triangle-{i}.png"))
 
-def image_path_to_binary_vector(image_path, threshold=128):
+def resize_image(image_path, new_width, new_height):
     image = Image.open(image_path).convert('L')  # Открываем изображение и преобразуем в оттенки серого
+    resized_image = image.resize((new_width, new_height))  # Изменяем размер изображения
+    return resized_image
+
+def image_path_to_binary_vector(image_path, threshold=128, new_width=128, new_height=128):
+    if new_width and new_height:
+        image = resize_image(image_path, new_width, new_height)  # Изменяем размер изображения
+    else:
+        image = Image.open(image_path).convert('L')  # Открываем изображение и преобразуем в оттенки серого
     return image_to_binary_vector(image, threshold)
- 
+
 def image_to_binary_vector(image, threshold=128):
     binary_image = image.convert('L').point(lambda x: 0 if x < threshold else 255, mode='1')  # Применяем пороговую бинаризацию
     binary_vector = np.array(binary_image).flatten()  # Изменяем размерность до одномерного массива (вектора)
@@ -138,12 +146,12 @@ def add_noise(image, noise_type='gaussian'):
     if noise_type == 'gaussian':
         row, col, ch = np.array(image).shape
         mean = 0
-        var = 1
+        var = 100
         sigma = var ** 0.5
         gauss = np.random.normal(mean, sigma, (row, col, ch))
         noisy = np.array(image) + gauss
         noisy_image = Image.fromarray(noisy.astype(np.uint8))
-        return image
+        return noisy_image
     elif noise_type == 'salt_and_pepper':
         # Ваш код для добавления шума salt-and-pepper
         pass
@@ -155,5 +163,4 @@ def get_noisy_picture(from_, w, h, noise_type='gaussian'):
     image = Image.open(from_)
     image = image.resize((w, h))  # Изменяем размер изображения
     noisy_image = add_noise(image, noise_type)
-    noisy_image.show()  # Показываем изображение
     return noisy_image
