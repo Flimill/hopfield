@@ -117,30 +117,39 @@ def resize_image(image_path, new_width, new_height):
     resized_image = image.resize((new_width, new_height))  # Изменяем размер изображения
     return resized_image
 
-def image_path_to_binary_vector(image_path, threshold=128, new_width=128, new_height=128):
-    if new_width and new_height:
-        image = resize_image(image_path, new_width, new_height)  # Изменяем размер изображения
-    else:
-        image = Image.open(image_path).convert('L')  # Открываем изображение и преобразуем в оттенки серого
-    return image_to_binary_vector(image, threshold)
-
-def image_to_binary_vector(image, threshold=128):
-    binary_image = image.convert('L').point(lambda x: 0 if x < threshold else 255, mode='1')  # Применяем пороговую бинаризацию
-    binary_vector = np.array(binary_image).flatten()  # Изменяем размерность до одномерного массива (вектора)
+def image_to_vector(image,new_width,new_height):
+    image = image.resize((new_width, new_height)).convert('L')  # Открываем изображение и конвертируем его в черно-белое
+    image_array = np.array(image)
+    binary_vector = []
+    for pixel_value in image_array.flatten():
+        # Преобразуем каждое значение пикселя в 5 элементов 0 или 1, представляющих оттенки серого
+        binary_vector.extend([1 if pixel_value >= i * 51 else 0 for i in range(1, 6)])
     binary_vector = np.where(binary_vector, 1, -1)
     return binary_vector
 
-def binary_vector_to_image(binary_vector, width, height):
-    # Преобразование значений вектора обратно в значения пикселей
-    binary_vector = np.where(binary_vector == 1, 255, 0)
-    
-    # Изменение размерности массива до двумерного массива (изображения)
-    image_array = binary_vector.reshape((height, width)).astype(np.uint8)
-    
-    # Создание изображения из массива пикселей
-    image = Image.fromarray(image_array)
-    return image
+def image_path_to_vector(image_path,new_width,new_height):
+    image = resize_image(image_path, new_width, new_height).convert('L')  # Открываем изображение и конвертируем его в черно-белое
+    image_array = np.array(image)
+    binary_vector = []
+    for pixel_value in image_array.flatten():
+        # Преобразуем каждое значение пикселя в 5 элементов 0 или 1, представляющих оттенки серого
+        binary_vector.extend([1 if pixel_value >= i * 51 else 0 for i in range(1, 6)])
+    binary_vector = np.where(binary_vector, 1, -1)
+    return binary_vector
 
+def vector_to_image(binary_vector, width, height):
+    if len(binary_vector) % 5 != 0:
+        raise ValueError("Invalid binary vector length. It should be divisible by 5.")
+    binary_vector = np.where(binary_vector == -1, 0, binary_vector)
+    pixel_values = []
+    for i in range(0, len(binary_vector), 5):
+        # Обратное преобразование: каждые 5 элементов вектора переводим в значение пикселя
+        shade_value = sum(binary_vector[i:i+5]) * 51
+        pixel_values.append(shade_value)
+    
+    # Изменяем размерность массива значений пикселей и создаём изображение
+    image_array = np.array(pixel_values, dtype=np.uint8).reshape((height, width))
+    return Image.fromarray(image_array)
 
 def add_noise(image, noise_type='gaussian'):
     if noise_type == 'gaussian':
@@ -151,7 +160,7 @@ def add_noise(image, noise_type='gaussian'):
         gauss = np.random.normal(mean, sigma, (row, col, ch))
         noisy = np.array(image) + gauss
         noisy_image = Image.fromarray(noisy.astype(np.uint8))
-        return noisy_image
+        return noisy_image.convert('L')
     elif noise_type == 'salt_and_pepper':
         # Ваш код для добавления шума salt-and-pepper
         pass
@@ -164,3 +173,15 @@ def get_noisy_picture(from_, w, h, noise_type='gaussian'):
     image = image.resize((w, h))  # Изменяем размер изображения
     noisy_image = add_noise(image, noise_type)
     return noisy_image
+
+
+
+
+
+''''
+# Example usage:
+image_path = 'patterns/box/box-0.png'
+binary_vector = image_to_vector(image_path,128,128)
+reconstructed_image = vector_to_image(binary_vector, width=128, height=128)
+reconstructed_image.show()
+'''
