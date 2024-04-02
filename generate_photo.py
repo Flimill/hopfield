@@ -151,37 +151,23 @@ def vector_to_image(binary_vector, width, height):
     image_array = np.array(pixel_values, dtype=np.uint8).reshape((height, width))
     return Image.fromarray(image_array)
 
-def add_noise(image, noise_type='gaussian'):
-    if noise_type == 'gaussian':
-        row, col, ch = np.array(image).shape
-        mean = 0
-        var = 100
-        sigma = var ** 0.5
-        gauss = np.random.normal(mean, sigma, (row, col, ch))
-        noisy = np.array(image) + gauss
-        noisy_image = Image.fromarray(noisy.astype(np.uint8))
-        return noisy_image.convert('L')
-    elif noise_type == 'salt_and_pepper':
-        # Ваш код для добавления шума salt-and-pepper
-        pass
-    else:
-        raise ValueError("Unsupported noise type. Choose from 'gaussian' or 'salt_and_pepper'.")
+def add_noise(image, noise_level):
+
+        img_array = np.array(image.convert('L'))
+        # Генерация случайных координат для добавления шума
+        salt_and_pepper = np.random.rand(*img_array.shape)
+        
+        # Добавление salt-and-pepper шума к изображению
+        img_array[salt_and_pepper < noise_level/2] = 0
+        img_array[salt_and_pepper > 1 - noise_level/2] = 255
+        
+        # Преобразование массива обратно в изображение PIL
+        noisy_image = Image.fromarray(img_array)
+        return noisy_image
 
 
-def get_noisy_picture(from_, w, h, noise_type='gaussian'):
+def get_noisy_picture(from_, w, h, noise_level):
     image = Image.open(from_)
     image = image.resize((w, h))  # Изменяем размер изображения
-    noisy_image = add_noise(image, noise_type)
+    noisy_image = add_noise(image, noise_level)
     return noisy_image
-
-
-
-
-
-''''
-# Example usage:
-image_path = 'patterns/box/box-0.png'
-binary_vector = image_to_vector(image_path,128,128)
-reconstructed_image = vector_to_image(binary_vector, width=128, height=128)
-reconstructed_image.show()
-'''

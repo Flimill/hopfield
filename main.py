@@ -33,6 +33,7 @@ class HopfieldNetwork:
             if np.array_equal(new_pattern, pattern):
                 return new_pattern
             pattern = new_pattern
+        print("max_iters")
 
 
 
@@ -49,6 +50,7 @@ if __name__ == "__main__":
     train_path = "patterns"
     #shape_types=['box','circle','triangle']
     shape_types=['box']
+    noise_level = 0.1
     
     #generate_photo.genererate_pictures(train_path, num_samples,w,h,min_fig_size,num_shapes)
     
@@ -60,7 +62,7 @@ if __name__ == "__main__":
     
     for type in shape_types:
         for i in range(num_samples):
-            path=f"patterns/{type}/{type}-{i}.png"
+            path=f"patterns/{i}.png"
             #image_binary_vector = generate_photo.image_path_to_binary_vector(path, threshold=128, new_width=w, new_height=h)
             image_binary_vector = generate_photo.image_path_to_vector(path,w,h)
             patterns.append(image_binary_vector)
@@ -69,44 +71,14 @@ if __name__ == "__main__":
     network.train(patterns)
     for i in range(num_samples):
         for type in shape_types:
-            path=f"patterns/{type}/{type}-{i}.png"
+            path=f"patterns/{i}.png"
             generate_photo.vector_to_image(generate_photo.image_path_to_vector(path,w,h),w,h).show()
             
-            noisy_image= generate_photo.get_noisy_picture(path,w,h)
+            noisy_image= generate_photo.get_noisy_picture(path,w,h, noise_level)
             generate_photo.vector_to_image(generate_photo.image_to_vector(noisy_image,w,h),w,h).show()
             noisy_image_binary_vector = generate_photo.image_to_vector(noisy_image,w,h)
-            #generate_photo.binary_vector_to_image(noisy_image_binary_vector,w,h).show()
             predicted_pattern=network.predict(noisy_image_binary_vector)
             result_image = generate_photo.vector_to_image(predicted_pattern, w, h)
             result_image.show()
             time.sleep(2)
 
-
-
-
-
-
-
-
-
-
-
-
-'''''
-    # Теперь, если у нас есть искажённое изображение (например, с шумом), мы можем использовать сеть Хопфилда для восстановления оригинального образа.
-    test_path = "test"
-    
-    num_samples = 5
-    generate_photo.genererate_pictures(test_path, num_samples,w,h,min_fig_size,num_shapes)
-    for i in range(num_samples):    
-        test_pattern = generate_photo.image_to_binary_vector(f'test/boxes/box-{i}.png')
-        predicted_pattern = network.predict(test_pattern)
-        if np.array_equal(predicted_pattern, box):
-            print("Predicted pattern represents a box.")
-        elif np.array_equal(predicted_pattern, circle):
-            print("Predicted pattern represents a circle.")
-        elif np.array_equal(predicted_pattern, triangle):
-            print("Predicted pattern represents a triangle.")
-        else:
-            print("Predicted pattern does not match any known pattern.")
-'''
