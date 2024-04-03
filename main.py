@@ -71,11 +71,13 @@ if __name__ == "__main__":
         network = HopfieldNetwork(pattern_size=len(patterns[0]))
         network.train(patterns)
         for i in range(num_samples):
-            path=f"patterns/{i}.png"        
+            path=f"patterns/{i}.png"    
             noisy_image= generate_photo.get_noisy_picture(path,w,h, noise_level/1000)
             noisy_image_binary_vector = generate_photo.image_to_vector(noisy_image,w,h)
             predicted_pattern=network.predict(noisy_image_binary_vector)
-            result_image = generate_photo.vector_to_image(predicted_pattern, w, h)
+            vector = generate_photo.image_path_to_vector(path,w,h)
+            if np.array_equal(predicted_pattern, vector):
+                true_predict_count +=1
         accuracy = true_predict_count/(len(shape_types) * num_samples)
         print(f"Зашумлённость = {noise_level/10}%, accuracy = {accuracy*100}%")
         accuracy_array.append(accuracy)
